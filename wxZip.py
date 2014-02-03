@@ -1,0 +1,117 @@
+#!/usr/bin/python2.7 -tt
+
+import sys
+
+if sys.version_info < (2, 7):
+    print ("Must use python 2.7 or greater\n")
+    sys.exit()
+elif sys.version_info[0] > 2:
+	print ("Incompatible with Python 3\n")
+	sys.exit()
+
+try:
+	import wx
+	import wx.lib.scrolledpanel as scrolled
+except ImportError:
+	print ("You do not appear to have wxpython installed.\n")
+	print ("Without wxpython, this program cannot run.\n")
+	print ("You can download wxpython at: http://www.wxpython.org/download.php#stable \n")
+	sys.exit()
+
+import os
+import ZipCLI
+
+FILE_OPEN_DIRECTORY = 650
+FILE_CLOSE = 666
+INIT_TEXT = 'Drag files here to begin zipping'
+
+class wxGUI(wx.Frame):
+
+	def __init__(self, *args, **kwargs):
+		super(wxGUI, self).__init__(*args, **kwargs)
+
+		dt = FileDrop(self)
+		dt.SetFrame(self)
+		self.SetDropTarget(dt)
+
+		self.Bind(wx.EVT_CLOSE, self.Exit)
+
+		self.SetTitle("wxPyEasyZip")
+
+		self.ConstructMenu()
+		self.textarea = wx.TextCtrl(self, -1, style=wx.TE_MULTILINE|wx.BORDER_SUNKEN|wx.TE_READONLY|wx.TE_RICH2, value=INIT_TEXT)
+		self.textarea.SetDropTarget(dt)
+
+		self.Show(True)
+
+	def parseArgs(self, e):
+		self.statusbar.SetStatusText('')
+		if self.textarea.GetValue() == INIT_TEXT:
+			self.statusbar.SetStatusText('Must enter at least one folder to zip')
+			return
+		data = self.textarea.GetValue().splitlines()
+		for i in reversed(xrange(0,len(data))):
+			self.parseArg(data[i])
+			data.pop()
+			self.textarea.SetValue('\n'.join(data))
+		self.statusbar.SetStatusText('Finished')
+	
+	def parseArg(self, arg):
+		cli = ZipCLI.ZipCLI()
+		if os.path.isdir(arg):
+			self.statusbar.SetStatusText('Parsing ' + arg)
+			cli.processDir(arg)
+		else:
+			self.statusbar.SetStatusText(arg + ' is not a valid directory')
+
+	def addArg(self, arg):
+		if self.textarea.GetValue() == INIT_TEXT:
+			self.textarea.SetValue('')
+		else:
+			self.textarea.AppendText('\n')
+		self.textarea.AppendText(arg)
+
+	def ConstructMenu(self):
+
+		self.menubar = wx.MenuBar()
+		menuFile = wx.Menu()
+		menuParse = wx.Menu()
+
+		#menuFile.AppendSeparator()
+		self.SetMenuItem(menuFile, FILE_CLOSE, '&Quit\tCtrl+Q', self.Exit)
+
+		self.SetMenuItem(menuParse, FILE_OPEN_DIRECTORY, '&Parse\tCtrl+P', self.parseArgs)
+
+		self.menubar.Append(menuFile, '&File')
+		self.menubar.Append(menuParse, '&Parse')
+
+		self.statusbar = self.CreateStatusBar()
+		self.SetMenuBar(self.menubar);
+
+	def SetMenuItem(self, menu, idn, text, event):
+		mItem = wx.MenuItem(menu, idn, text)
+		menu.AppendItem(mItem)
+		self.Bind(wx.EVT_MENU, event, id=idn)
+
+	def Exit(self, e):
+		wx.Exit()
+
+class FileDrop(wx.FileDropTarget):
+	def __init__(self, window):
+		wx.FileDropTarget.__init__(self)
+		self.window = window
+
+	def SetFrame(self, frame):
+		self.frame = frame;
+
+	def OnDropFiles(self, x, y, filenames):
+		for name in filenames:
+			f.addArg(name)
+
+JPy = wx.App(False)
+
+options = wx.MINIMIZE_BOX | wx.MAXIMIZE_BOX | wx.RESIZE_BORDER | wx.SYSTEM_MENU | wx.CAPTION | wx.CLOSE_BOX
+#frame = wx.Frame(None, style=options)
+f = wxGUI(wx.Frame(None, style=options));
+
+JPy.MainLoop()
