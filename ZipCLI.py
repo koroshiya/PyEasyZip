@@ -64,7 +64,7 @@ class ZipCLI():
 					nameList.append(n)
 		return [fileList, nameList]
 
-	def zipDir(self, arg, dirs, nfiles):
+	def zipDir(self, arg, nfiles):
 		names = []
 		files = []
 		for f in nfiles:
@@ -95,25 +95,23 @@ class ZipCLI():
 
 	def processDir(self, arg):
 		self.printVerbose('argument',arg)
-		for root, dirs, files in os.walk(arg):
-			if self.topLevelOnly:
-				if self.encompassAll:
-					arrs = self.writeDirToZipRecursively(arg)
-					self.zipDirDirectly(arg, arrs[0], arrs[1])
+		if not os.access(arg, os.R_OK):
+			self.printVerbose('Cannot read from', arg)
+		elif not os.access(os.path.dirname(arg), os.W_OK):
+			self.printVerbose('Cannot write to', os.path.dirname(arg))
+		else:
+			for root, dirs, files in os.walk(arg):
+				if self.topLevelOnly:
+					if self.encompassAll:
+						arrs = self.writeDirToZipRecursively(arg)
+						self.zipDirDirectly(arg, arrs[0], arrs[1])
+					else:
+						self.zipDir(arg, files)
 				else:
-					self.zipDir(arg, dirs, files)
-			elif len(dirs) > 0:
-				for adir in dirs:
-					self.processDir(arg + '/' + adir)
-			else:
-				if not os.access(arg, os.R_OK):
-					self.printVerbose('Cannot read from', arg)
-					return
-				elif not os.access(os.path.dirname(arg), os.W_OK):
-					self.printVerbose('Cannot write to', os.path.dirname(arg))
-					return
-				self.zipDir(arg, dirs, files)
-			return
+					for adir in dirs:
+						self.processDir(arg + '/' + adir)
+					self.zipDir(arg, files)
+				return
 
 if len(sys.argv) > 1:
 	gui = ZipCLI()
