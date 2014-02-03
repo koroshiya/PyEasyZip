@@ -4,6 +4,21 @@ import zipfile
 import sys
 import os
 
+overwrite = False
+
+def processParam(arg):
+	if arg[0] == '-':
+		for param in arg[1:]:
+			print param
+			if param == 'o':
+				global overwrite
+				overwrite = True
+			else:
+				pass
+		return True
+	else:
+		return False
+
 def processDir(arg):
 	print arg
 	#files = os.listdir(arg)
@@ -13,18 +28,24 @@ def processDir(arg):
 				processDir(arg + adir)
 			return
 		else:
-			zip = zipfile.ZipFile(arg + '.zip', 'w', compression=zipfile.ZIP_DEFLATED)
+			zipName = arg + '.zip';
+			if os.path.isfile(zipName):
+				if overwrite:
+					os.remove(zipName)
+				else:
+					continue
+			zip = zipfile.ZipFile(zipName, 'w', compression=zipfile.ZIP_DEFLATED)
 			for f in files:
 				zip.write(arg + '/' + f, f)
 				#TODO: don't rearchive other archives
-				#TODO: check if zip already exists
-				#TODO: CLI args, such as overwrite?
 			zip.close()
 			print os.path.basename(os.path.normpath(arg)) + '.zip'
 
 if len(sys.argv) > 1:
 	for arg in sys.argv:
-		if os.path.isdir(arg):
+		if processParam(arg):
+			pass
+		elif os.path.isdir(arg):
 			processDir(arg)
 else:
 	print "No files specified"
