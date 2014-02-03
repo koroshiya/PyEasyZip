@@ -7,10 +7,17 @@ import os
 overwrite    = False 
 topLevelOnly = False
 encompassAll = False
-#TODO: verbose
+verbose      = False
 #TODO: archives included
 
 archiveFormats = ['zip','rar','tar','gz','xz','ar','bz2','7z','cbr','cbz']
+
+def printVerbose(*args):
+	if verbose:
+		argList = ''
+		for arg in args:
+			argList += arg + ' '
+		print argList
 
 def processParam(arg):
 	if arg[0] == '-':
@@ -22,6 +29,9 @@ def processParam(arg):
 				global topLevelOnly
 				topLevelOnly = True
 			elif param == 'a':
+				global encompassAll
+				encompassAll = True
+			elif param == 'v':
 				global encompassAll
 				encompassAll = True
 			else:
@@ -58,25 +68,24 @@ def zipDirDirectly(arg, files, names):
 	if os.path.isfile(zipName):
 		if overwrite:
 			if not os.access(os.path.dirname(arg), os.W_OK):
-				print 'Cannot delete file:', zipName
+				printVerbose('Cannot delete file:', zipName)
 				return
 			else:
 				os.remove(zipName)
 		else:
-			print zipName, 'already exists'
+			printVerbose(zipName, 'already exists')
 			return
 	zip = zipfile.ZipFile(zipName, 'w', compression=zipfile.ZIP_DEFLATED)
 	for i in range(len(files)):
 		if not '.' in names[i] or '.' in names[i] and not names[i].split(".")[-1] in archiveFormats:
 			zip.write(files[i], names[i])
 		else:
-			print 'Skipping archive file',names[i]
+			printVerbose('Skipping archive file',names[i])
 	zip.close()
-	print os.path.basename(os.path.normpath(arg)) + '.zip'
+	printVerbose('Created zip file ' + os.path.basename(os.path.normpath(arg)) + '.zip')
 
 def processDir(arg):
-	print 'argument',arg
-	#files = os.listdir(arg)
+	printVerbose('argument',arg)
 	for root, dirs, files in os.walk(arg):
 		if topLevelOnly:
 			if encompassAll:
@@ -85,15 +94,14 @@ def processDir(arg):
 			else:
 				zipDir(arg, dirs, files)
 		elif len(dirs) > 0:
-			print 'dirs'
 			for adir in dirs:
 				processDir(arg + '/' + adir)
 		else:
 			if not os.access(arg, os.R_OK):
-				print 'Cannot read from', arg
+				printVerbose('Cannot read from', arg)
 				return
 			elif not os.access(os.path.dirname(arg), os.W_OK):
-				print 'Cannot write to', os.path.dirname(arg)
+				printVerbose('Cannot write to', os.path.dirname(arg))
 				return
 			zipDir(arg, dirs, files)
 		return
