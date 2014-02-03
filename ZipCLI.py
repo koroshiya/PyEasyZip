@@ -8,7 +8,7 @@ overwrite    = False
 topLevelOnly = False
 encompassAll = False
 verbose      = False
-#TODO: archives included
+incArchives  = False
 
 archiveFormats = ['zip','rar','tar','gz','xz','ar','bz2','7z','cbr','cbz']
 
@@ -32,8 +32,11 @@ def processParam(arg):
 				global encompassAll
 				encompassAll = True
 			elif param == 'v':
-				global encompassAll
-				encompassAll = True
+				global verbose
+				verbose = True
+			elif param == 'z':
+				global incArchives
+				incArchives = True
 			else:
 				pass
 		return True
@@ -77,7 +80,7 @@ def zipDirDirectly(arg, files, names):
 			return
 	zip = zipfile.ZipFile(zipName, 'w', compression=zipfile.ZIP_DEFLATED)
 	for i in range(len(files)):
-		if not '.' in names[i] or '.' in names[i] and not names[i].split(".")[-1] in archiveFormats:
+		if incArchives or not '.' in names[i] or '.' in names[i] and not names[i].split(".")[-1] in archiveFormats:
 			zip.write(files[i], names[i])
 		else:
 			printVerbose('Skipping archive file',names[i])
