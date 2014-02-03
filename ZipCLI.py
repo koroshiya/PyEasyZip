@@ -28,10 +28,20 @@ def processDir(arg):
 				processDir(arg + adir)
 			return
 		else:
+			if not os.access(arg, os.R_OK):
+				print 'Cannot read from', arg
+				continue
+			elif not os.access(os.path.dirname(arg), os.W_OK):
+				print 'Cannot write to', os.path.dirname(arg)
+				continue
 			zipName = arg + '.zip';
 			if os.path.isfile(zipName):
 				if overwrite:
-					os.remove(zipName)
+					if not os.access(os.path.dirname(arg), os.W_OK):
+						print 'Cannot delete file:', zipName
+						continue
+					else:
+						os.remove(zipName)
 				else:
 					continue
 			zip = zipfile.ZipFile(zipName, 'w', compression=zipfile.ZIP_DEFLATED)
