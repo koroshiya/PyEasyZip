@@ -7,6 +7,10 @@ import os
 overwrite    = False 
 topLevelOnly = False
 encompassAll = False
+#TODO: verbose
+#TODO: archives included
+
+archiveFormats = ['zip','rar','tar','gz','xz','ar','bz2','7z','cbr','cbz']
 
 def processParam(arg):
 	if arg[0] == '-':
@@ -63,10 +67,10 @@ def zipDirDirectly(arg, files, names):
 			return
 	zip = zipfile.ZipFile(zipName, 'w', compression=zipfile.ZIP_DEFLATED)
 	for i in range(len(files)):
-		print 'f',files[i]
-		print 'n',names[i]
-		zip.write(files[i], names[i])
-		#TODO: don't rearchive other archives
+		if not '.' in names[i] or '.' in names[i] and not names[i].split(".")[-1] in archiveFormats:
+			zip.write(files[i], names[i])
+		else:
+			print 'Skipping archive file',names[i]
 	zip.close()
 	print os.path.basename(os.path.normpath(arg)) + '.zip'
 
@@ -74,7 +78,6 @@ def processDir(arg):
 	print 'argument',arg
 	#files = os.listdir(arg)
 	for root, dirs, files in os.walk(arg):
-		print 'iteration'
 		if topLevelOnly:
 			if encompassAll:
 				arrs = writeDirToZipRecursively(arg)
