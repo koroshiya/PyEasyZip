@@ -4,9 +4,9 @@ import zipfile
 import sys
 import os
 
-overwrite = False
+overwrite    = False 
 topLevelOnly = False
-encompassAll = False #recursively collects files and adds to the top level archive. topLevelOnly must be True
+encompassAll = False
 
 def processParam(arg):
 	if arg[0] == '-':
